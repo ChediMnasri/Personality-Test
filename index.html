@@ -1,0 +1,789 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>MBTI TEST — Mind Odyssey (Professional)</title>
+
+  <!-- Tailwind CDN for quick, production-feeling UI while developing locally -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // Extend Tailwind tokens used in this file
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            mbtiPurple: '#7c3aed',
+            mbtiBlue: '#2563eb',
+            mbtiGreen: '#16a34a',
+            mbtiYellow: '#facc15',
+            softWhite: 'rgba(255,255,255,0.85)',
+            glass: 'rgba(255,255,255,0.12)'
+          },
+          fontFamily: {
+            inter: ['Inter', 'system-ui', 'sans-serif']
+          }
+        }
+      }
+    };
+  </script>
+
+  <!--
+    Large custom CSS block provides:
+     - polished background animation
+     - glass-like legibility for content without boxing
+     - responsive layouts
+     - accessible focus states
+     - smooth transitions
+  -->
+  <style>
+    /* ------------------------------------------------------------
+       Base and Reset
+    ------------------------------------------------------------*/
+    :root {
+      --bg-duration: 28s;
+      --card-tint-alpha: 0.14;
+      --accent-a: #2563eb;
+      --accent-b: #7c3aed;
+      --accent-c: #16a34a;
+      --accent-d: #facc15;
+      --text-strong: rgba(17,24,39,0.98);
+      --muted: rgba(255,255,255,0.9);
+      --glass-shadow: 0 10px 40px rgba(2,6,23,0.12);
+      --focus-outline: 3px solid rgba(37,99,235,0.14);
+    }
+
+    html,body {
+      height:100%;
+      margin:0;
+      padding:0;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      -webkit-tap-highlight-color: transparent;
+      color: var(--text-strong);
+    }
+
+    /* ------------------------------------------------------------
+       Animated background - smooth, GPU-friendly movement
+       The gradient has 4 MBTI-inspired color stops.
+    ------------------------------------------------------------*/
+    body {
+      --g1: var(--accent-c); /* green */
+      --g2: var(--accent-a); /* blue */
+      --g3: var(--accent-b); /* purple */
+      --g4: var(--accent-d); /* yellow */
+
+      background: linear-gradient(90deg, var(--g1), var(--g2), var(--g3), var(--g4), var(--g1));
+      background-size: 200% 200%;
+      animation: bgShift var(--bg-duration) cubic-bezier(.37,.14,.22,.97) infinite;
+      transition: background 0.9s ease;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    @keyframes bgShift {
+      0% { background-position: 0% 50%; }
+      25% { background-position: 25% 50%; }
+      50% { background-position: 50% 50%; }
+      75% { background-position: 75% 50%; }
+      100% { background-position: 100% 50%; }
+    }
+
+    /* Utility to pause the background animation (applied by JS at result) */
+    .bg-paused {
+      animation-play-state: paused !important;
+    }
+
+    /* ------------------------------------------------------------
+       Shell layout — content sits centrally but is not boxed
+    ------------------------------------------------------------*/
+    .shell {
+      width: 100%;
+      max-width: 1100px;
+      box-sizing: border-box;
+      position: relative;
+      display: grid;
+      grid-template-columns: 1fr;
+      grid-template-rows: auto 1fr auto;
+      gap: 1rem;
+      padding: clamp(20px, 3.5vw, 48px);
+      align-items: start;
+    }
+
+    /* ambient overlay helps legibility subtly */
+    .ambient {
+      pointer-events: none;
+      position: absolute;
+      inset: 0;
+      border-radius: 20px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.02));
+      mix-blend-mode: overlay;
+      z-index: 0;
+      transition: background 0.9s ease;
+    }
+
+    header.app-header {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap: 1rem;
+      z-index: 10;
+    }
+
+    /* logo and brand */
+    .brand {
+      display:flex;
+      align-items:center;
+      gap: 0.9rem;
+    }
+    .logo {
+      width:56px; height:56px; border-radius:14px;
+      display:flex; align-items:center; justify-content:center;
+      color:white; font-weight:800; font-size:16px;
+      background: linear-gradient(135deg, var(--accent-b), var(--accent-a));
+      box-shadow: var(--glass-shadow);
+    }
+    .brand-title {
+      font-size: 1.15rem;
+      font-weight:800;
+      letter-spacing:-0.01em;
+      color: var(--muted);
+      text-shadow: 0 6px 30px rgba(0,0,0,0.12);
+    }
+    .brand-sub {
+      font-size:0.9rem;
+      color: rgba(255,255,255,0.86);
+      margin-top: 2px;
+    }
+
+    /* small top-right progress badge */
+    .progress-badge {
+      padding: 0.5rem 0.8rem;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.16);
+      color: white;
+      font-weight:700;
+      font-size:0.9rem;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+      z-index: 10;
+    }
+
+    /* ------------------------------------------------------------
+       Main content region where questions appear
+       - intentionally transparent, but with good spacing and legibility
+       - we use z-index to ensure it sits above the ambient overlay
+    ------------------------------------------------------------*/
+    .main {
+      z-index: 10;
+      display:flex;
+      align-items:flex-start;
+      justify-content:center;
+      width:100%;
+      min-height: 52vh;
+    }
+
+    .content {
+      width:100%;
+      max-width:760px;
+      display:flex;
+      flex-direction:column;
+      gap: 1.25rem;
+      align-items: stretch;
+      padding: clamp(18px, 2.6vw, 28px);
+      box-sizing: border-box;
+      /* subtle inner glass tint to aid visible contrast */
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
+      border-radius: 14px;
+      /* NO visible border; keep it integrated with background */
+      box-shadow: 0 12px 44px rgba(2,6,23,0.08);
+      transition: transform .18s ease;
+    }
+
+    /* Small header for question area */
+    .q-head {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 1rem;
+    }
+    .q-meta { font-size:0.95rem; color: rgba(255,255,255,0.86); font-weight:700; }
+    .q-sub { font-size:0.9rem; color: rgba(255,255,255,0.8); }
+
+    /* question text */
+    .q-text {
+      font-size: clamp(1.1rem, 1.6vw, 1.5rem);
+      font-weight:800;
+      color: rgba(255,255,255,0.96);
+      line-height:1.08;
+      margin-top: 6px;
+      letter-spacing: -0.01em;
+    }
+
+    /* options grid */
+    .options {
+      display:flex;
+      flex-wrap:wrap;
+      gap: 0.6rem;
+      justify-content:center;
+      align-items:center;
+      margin-top: 8px;
+    }
+
+    .option {
+      width:56px; height:56px;
+      border-radius:12px;
+      display:flex; align-items:center; justify-content:center;
+      font-weight:800; font-size:1rem;
+      color: rgba(255,255,255,0.95);
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.08);
+      transition: transform .12s ease, box-shadow .12s ease, background .18s ease;
+      cursor:pointer;
+      user-select:none;
+      outline: none;
+    }
+
+    .option:hover { transform: translateY(-6px); box-shadow: 0 12px 40px rgba(0,0,0,0.14); }
+    .option:active { transform: translateY(-2px); }
+
+    /* selected state (clear and visible) */
+    .option.selected {
+      background: linear-gradient(90deg, rgba(255,255,255,0.96), rgba(255,255,255,0.9));
+      color: var(--text-strong);
+      box-shadow: 0 18px 60px rgba(0,0,0,0.18);
+      transform: translateY(-8px) scale(1.07);
+      border: none;
+    }
+
+    /* keyboard focus */
+    .option:focus {
+      box-shadow: 0 0 0 6px rgba(37,99,235,0.08);
+    }
+
+    /* Navigation row (space between) */
+    .nav {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 1rem;
+      margin-top: 10px;
+    }
+
+    .nav-left { color: rgba(255,255,255,0.9); font-weight:600; }
+    .nav-right { display:flex; gap: 0.8rem; align-items:center; }
+
+    .btn {
+      padding: 10px 16px;
+      border-radius: 12px;
+      font-weight:800;
+      cursor:pointer;
+      color: rgba(255,255,255,0.96);
+      background: linear-gradient(90deg, var(--accent-a), var(--accent-b));
+      border: none;
+      box-shadow: 0 14px 40px rgba(37,99,235,0.16);
+      transition: transform .12s ease, opacity .12s ease;
+    }
+    .btn.secondary {
+      background: rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.95);
+      box-shadow: 0 8px 18px rgba(2,6,23,0.06);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .btn:disabled, .btn.secondary:disabled {
+      opacity: 0.45; cursor: not-allowed; transform: none;
+    }
+
+    /* footer area small note */
+    footer.app-footer {
+      display:flex; justify-content:center; align-items:center; z-index:10;
+      color: rgba(255,255,255,0.86); font-size:0.95rem;
+    }
+
+    /* result styles */
+    .result {
+      display:flex; flex-direction:column; align-items:center; gap: 1.1rem;
+      padding: 12px 18px;
+    }
+    .result .type {
+      font-size: clamp(2.4rem, 4vw, 4.5rem);
+      font-weight:900;
+      color: white;
+      text-shadow: 0 14px 60px rgba(0,0,0,0.25);
+      letter-spacing: 0.02em;
+      margin-top: 20px;
+    }
+    .axis-list {
+      width:100%;
+      max-width:760px;
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .axis-row {
+      display:flex; align-items:center; gap: 12px;
+    }
+    .axis-label { width:28px; font-weight:800; color: rgba(255,255,255,0.96); }
+    .axis-bar {
+      flex:1; height:12px; border-radius:999px; background: rgba(255,255,255,0.12); overflow:hidden;
+    }
+    .axis-fill {
+      height:100%; width:0%; background: linear-gradient(90deg, rgba(255,255,255,0.95), rgba(255,255,255,0.8)); transition: width 700ms cubic-bezier(.2,.9,.3,1);
+      border-radius:999px;
+    }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .logo { width:48px; height:48px; font-size:14px; }
+      .brand-title { font-size:1rem; }
+      .content { padding: 12px; }
+      .option { width:50px; height:50px; border-radius:10px; }
+      .btn { padding: 9px 12px; border-radius: 10px; }
+    }
+
+    /* Small helper classes developer-friendly */
+    .hide { display:none !important; }
+    .flex-center { display:flex; align-items:center; justify-content:center; }
+  </style>
+</head>
+
+<body>
+  <div class="shell" role="application" aria-labelledby="app-title">
+    <div class="ambient" aria-hidden="true"></div>
+
+    <!-- Header -->
+    <header class="app-header" role="banner">
+      <div class="brand" aria-hidden="false">
+        <div class="logo" aria-hidden="true">MBTI</div>
+        <div>
+          <div id="app-title" class="brand-title">MBTI TEST</div>
+          <div id="app-sub" class="brand-sub">Discover your personality profile</div>
+        </div>
+      </div>
+
+      <div id="progressBadge" class="progress-badge" aria-live="polite">Progress <span id="progressText">0 / 0</span></div>
+    </header>
+
+    <!-- Main content -->
+    <main class="main" role="main">
+      <section class="content" id="cardContent" aria-live="polite">
+        <!-- dynamic content injected here -->
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <div id="footerText">Crafted for clarity — answer honestly, enjoy the journey.</div>
+    </footer>
+  </div>
+
+  <!--
+    Application JavaScript
+    - Self-contained, defensive, documented
+    - Handles render flow, keyboard input, selection, result reveal
+  -->
+  <script>
+  /************************************************************************
+   * MBTI TEST — Single-file app
+   *
+   * This script is purposely defensive:
+   *  - uses clear DOM creation helpers
+   *  - avoids fragile query selectors
+   *  - ensures accessibility attributes are present
+   ************************************************************************/
+
+  // ---------------------
+  // Questions & Configuration
+  // ---------------------
+  const QUESTIONS = [
+    { id: 'q1', axis: 'EI', direction: 1, text: 'You enjoy being the center of attention at social events.' },
+    { id: 'q2', axis: 'EI', direction: -1, text: 'You prefer spending free time in calm, quiet places.' },
+    { id: 'q3', axis: 'SN', direction: 1, text: 'You are more interested in facts than abstract ideas.' },
+    { id: 'q4', axis: 'SN', direction: -1, text: 'You often think about future possibilities rather than current realities.' },
+    { id: 'q5', axis: 'TF', direction: 1, text: 'You prioritize logic over emotions when making decisions.' },
+    { id: 'q6', axis: 'TF', direction: -1, text: 'You value empathy and emotional awareness in others.' },
+    { id: 'q7', axis: 'JP', direction: 1, text: 'You prefer structure and clear plans.' },
+    { id: 'q8', axis: 'JP', direction: -1, text: 'You like to keep your options open and go with the flow.' }
+  ];
+
+  // group mapping for result color locking
+  const GROUP_MAP = {
+    INTJ: 'analyst', INTP: 'analyst', ENTJ: 'analyst', ENTP: 'analyst',
+    INFJ: 'diplomat', INFP: 'diplomat', ENFJ: 'diplomat', ENFP: 'diplomat',
+    ISTJ: 'sentinel', ISFJ: 'sentinel', ESTJ: 'sentinel', ESFJ: 'sentinel',
+    ISTP: 'explorer', ISFP: 'explorer', ESTP: 'explorer', ESFP: 'explorer'
+  };
+
+  const GROUP_COLOR = {
+    analyst: '#7c3aed',  // purple
+    diplomat: '#16a34a', // green
+    sentinel: '#2563eb', // blue
+    explorer: '#facc15'  // yellow
+  };
+
+  // ---------------------
+  // App state
+  // ---------------------
+  const state = {
+    index: 0,
+    answers: {}  // { qid: 1..10 }
+  };
+
+  // ---------------------
+  // Utility DOM helpers
+  // ---------------------
+  function $id(id) { return document.getElementById(id); }
+  function create(tag, attrs = {}, children = []) {
+    const el = document.createElement(tag);
+    for (const key in attrs) {
+      if (key === 'class') el.className = attrs[key];
+      else if (key === 'text') el.appendChild(document.createTextNode(attrs[key]));
+      else el.setAttribute(key, attrs[key]);
+    }
+    (Array.isArray(children) ? children : [children]).forEach(child => {
+      if (child === null || child === undefined) return;
+      el.appendChild(typeof child === 'string' ? document.createTextNode(child) : child);
+    });
+    return el;
+  }
+
+  // ---------------------
+  // Rendering: question page
+  // ---------------------
+  function renderQuestion() {
+    const container = $id('cardContent');
+    container.innerHTML = ''; // clear
+
+    const q = QUESTIONS[state.index];
+
+    // Header: meta row
+    const header = create('div', { class: 'q-head' },
+      [
+        create('div', { class: 'q-meta' }, `Question ${state.index + 1} of ${QUESTIONS.length}`),
+        create('div', { class: 'q-sub' }, 'Pick how much the statement fits you (1–10)')
+      ]
+    );
+
+    // Main question text
+    const qText = create('div', { class: 'q-text', id: 'qText' }, q.text);
+
+    // Options (1..10)
+    const options = create('div', { class: 'options', role: 'radiogroup', 'aria-label': q.text });
+    for (let i = 1; i <= 10; i++) {
+      const btn = create('button', {
+        class: 'option',
+        type: 'button',
+        'aria-pressed': (state.answers[q.id] === i) ? 'true' : 'false',
+        'data-val': String(i),
+      }, String(i));
+
+      // if preselected, add the class
+      if (state.answers[q.id] === i) btn.classList.add('selected');
+
+      // click handler
+      btn.addEventListener('click', () => {
+        state.answers[q.id] = i;
+        // update progress badge
+        updateProgressBadge();
+        // animate selection change
+        updateSelectionVisuals();
+      });
+
+      // keyboard support on button
+      btn.addEventListener('keydown', (e) => {
+        if (e.key >= '0' && e.key <= '9') {
+          e.preventDefault();
+          const val = e.key === '0' ? 10 : Number(e.key);
+          state.answers[q.id] = val;
+          updateProgressBadge();
+          updateSelectionVisuals();
+        }
+      });
+
+      options.appendChild(btn);
+    }
+
+    // Navigation row
+    const nav = create('div', { class: 'nav' });
+    const left = create('div', { class: 'nav-left' }, create('span', {}, 'Tip: use number keys or click'));
+    const right = create('div', { class: 'nav-right' });
+
+    const prevBtn = create('button', { class: 'btn secondary', id: 'prevBtn', type: 'button' }, '← Previous');
+    if (state.index === 0) prevBtn.setAttribute('disabled', 'disabled');
+    prevBtn.addEventListener('click', () => {
+      if (state.index > 0) {
+        state.index--;
+        // small transition
+        animateQuestionChange(renderQuestion);
+      }
+    });
+
+    const nextLabel = (state.index === QUESTIONS.length - 1) ? 'Show Results' : 'Next →';
+    const nextBtn = create('button', { class: 'btn', id: 'nextBtn', type: 'button' }, nextLabel);
+    nextBtn.addEventListener('click', () => {
+      // ensure current question answered
+      if (!state.answers[q.id]) {
+        ephemeralNote('Please pick a number to continue.');
+        return;
+      }
+      if (state.index < QUESTIONS.length - 1) {
+        state.index++;
+        animateQuestionChange(renderQuestion);
+      } else {
+        showLoaderThenResults();
+      }
+    });
+
+    right.appendChild(prevBtn);
+    right.appendChild(nextBtn);
+
+    nav.appendChild(left);
+    nav.appendChild(right);
+
+    container.appendChild(header);
+    container.appendChild(qText);
+    container.appendChild(options);
+    container.appendChild(nav);
+
+    // final UI updates
+    updateSelectionVisuals();
+    updateProgressBadge();
+    // ensure focus goes to first selected button or first option for accessibility
+    focusSelectedOption();
+  }
+
+  // Focus selected option for the current question (or first option)
+  function focusSelectedOption() {
+    const q = QUESTIONS[state.index];
+    const sel = document.querySelector(`.options .option[data-val="${state.answers[q.id] ?? 1}"]`);
+    (sel || document.querySelector('.options .option'))?.focus();
+  }
+
+  // Animate fade-out / fade-in between questions, then call render callback
+  function animateQuestionChange(renderFn) {
+    const container = $id('cardContent');
+    container.style.transition = 'opacity 200ms ease, transform 220ms ease';
+    container.style.opacity = '0';
+    container.style.transform = 'translateY(6px)';
+    setTimeout(() => {
+      renderFn();
+      container.style.opacity = '0';
+      container.style.transform = 'translateY(-6px)';
+      requestAnimationFrame(() => {
+        container.style.opacity = '1';
+        container.style.transform = 'translateY(0)';
+      });
+    }, 200);
+  }
+
+  // Update the visual classes of options (selected)
+  function updateSelectionVisuals() {
+    const q = QUESTIONS[state.index];
+    document.querySelectorAll('.options .option').forEach(btn => {
+      const val = Number(btn.getAttribute('data-val'));
+      if (state.answers[q.id] === val) {
+        btn.classList.add('selected');
+        btn.setAttribute('aria-pressed', 'true');
+      } else {
+        btn.classList.remove('selected');
+        btn.setAttribute('aria-pressed', 'false');
+      }
+    });
+  }
+
+  // Update the progress badge text
+  function updateProgressBadge() {
+    const count = Object.keys(state.answers).length;
+    $id('progressText').textContent = `${count} / ${QUESTIONS.length}`;
+  }
+
+  // Small ephemeral note near top (non-blocking)
+  let ephemeralTimer = null;
+  function ephemeralNote(msg, duration = 1800) {
+    // create a small badge
+    const note = create('div', { class: 'progress-badge', role: 'status', 'aria-live': 'polite' }, msg);
+    note.style.position = 'absolute';
+    note.style.left = '50%';
+    note.style.top = '12px';
+    note.style.transform = 'translateX(-50%)';
+    note.style.zIndex = 30;
+    document.body.appendChild(note);
+    if (ephemeralTimer) clearTimeout(ephemeralTimer);
+    ephemeralTimer = setTimeout(() => { note.remove(); }, duration);
+  }
+
+  // ---------------------
+  // Loader + Result flow
+  // ---------------------
+  function showLoaderThenResults() {
+    const container = $id('cardContent');
+    container.innerHTML = '';
+    const wrap = create('div', { class: 'result' });
+    const ring = create('div', { class: 'loader-ring', role: 'status' });
+    wrap.appendChild(ring);
+    wrap.appendChild(create('div', { class: 'q-text' }, 'Analyzing your personality matrix...'));
+
+    container.appendChild(wrap);
+
+    // Pause background subtly (JS will set class)
+    document.body.classList.add('bg-paused');
+
+    // Fake compute of 3 seconds for effect
+    setTimeout(() => {
+      const result = computeMBTI(state.answers);
+      showResult(result);
+    }, 2900);
+  }
+
+  // Compute MBTI given answers with same algorithm used earlier
+  function normalize(v) { return (Number(v) - 5.5) / 4.5; }
+  function computeMBTI(answers) {
+    const axes = { EI: [], SN: [], TF: [], JP: [] };
+    for (const q of QUESTIONS) {
+      const v = answers[q.id];
+      if (v === undefined) continue;
+      axes[q.axis].push(normalize(v) * q.direction);
+    }
+    const avg = {};
+    const mapping = { EI: ['E','I'], SN: ['S','N'], TF: ['T','F'], JP: ['J','P'] };
+    const letters = [];
+    for (const axis in axes) {
+      const arr = axes[axis];
+      const mean = arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0;
+      avg[axis] = mean;
+      letters.push(mean >= 0 ? mapping[axis][0] : mapping[axis][1]);
+    }
+    return { type: letters.join(''), avg };
+  }
+
+  // Show result: freeze background to group color and reveal bars
+  function showResult({ type, avg }) {
+    const container = $id('cardContent');
+    container.innerHTML = '';
+
+    // Determine group (use mapping; default 'analyst' if unmapped)
+    const group = GROUP_MAP[type] || 'analyst';
+    const color = GROUP_COLOR[group] || '#7c3aed';
+
+    // Freeze background and fade to solid color for emphasis
+    document.body.style.transition = 'background 900ms ease';
+    document.body.style.background = color;
+    document.body.classList.remove('bg-paused'); // we'll set solid color, no animation
+
+    // Build UI
+    const wrap = create('div', { class: 'result' });
+    wrap.appendChild(create('div', { class: 'small-label q-sub' }, 'Result'));
+    const typeNode = create('div', { class: 'type' }, type);
+    wrap.appendChild(typeNode);
+    wrap.appendChild(create('div', { class: 'q-sub' }, `Group: ${group.charAt(0).toUpperCase() + group.slice(1)}`));
+
+    // Axis list
+    const axisList = create('div', { class: 'axis-list' });
+    ['EI','SN','TF','JP'].forEach(axis => {
+      const mean = avg[axis] ?? 0;
+      const pct = Math.max(2, Math.min(98, Math.round(((mean + 1) / 2) * 100)));
+      const row = create('div', { class: 'axis-row' });
+      row.appendChild(create('div', { class: 'axis-label' }, axis[0]));
+      const bar = create('div', { class: 'axis-bar' });
+      const fill = create('div', { class: 'axis-fill' });
+      fill.style.width = '0%';
+      // animate fill after appended
+      setTimeout(() => { fill.style.width = `${pct}%`; }, 80);
+      bar.appendChild(fill);
+      row.appendChild(bar);
+      row.appendChild(create('div', { class: 'axis-label', style: 'text-align:right' }, axis[1]));
+      axisList.appendChild(row);
+    });
+
+    wrap.appendChild(axisList);
+
+    // Actions
+    const actions = create('div', { class: 'nav' });
+    const restart = create('button', { class: 'btn secondary' }, 'Restart');
+    restart.addEventListener('click', () => {
+      // restore background animation and state
+      document.body.style.background = '';
+      document.body.classList.remove('bg-paused');
+      state.index = 0;
+      state.answers = {};
+      renderQuestion();
+    });
+
+    actions.appendChild(restart);
+    wrap.appendChild(actions);
+
+    container.appendChild(wrap);
+
+    // small ambient tint matching group color
+    document.querySelector('.ambient').style.background = `linear-gradient(180deg, ${hexToRgba(color,0.07)}, ${hexToRgba(color,0.04)})`;
+  }
+
+  // ---------------------
+  // Utilities: color helpers
+  // ---------------------
+  function hexToRgba(hex, alpha = 1) {
+    const h = hex.replace('#','');
+    const bigint = parseInt(h.length === 3 ? h.split('').map(c=>c+c).join('') : h, 16);
+    const r = (bigint >> 16) & 255;
+    const g = (bigint >> 8) & 255;
+    const b = bigint & 255;
+    return `rgba(${r},${g},${b},${alpha})`;
+  }
+
+  // ---------------------
+  // Keyboard handling (global)
+  // - number keys 1..9, 0 -> 10
+  // - arrows left/right for prev/next
+  // ---------------------
+  window.addEventListener('keydown', (e) => {
+    // ignore when focus in an input (robustness)
+    const active = document.activeElement;
+    if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable)) return;
+
+    // digits
+    if (/^[0-9]$/.test(e.key)) {
+      const val = e.key === '0' ? 10 : Number(e.key);
+      const q = QUESTIONS[state.index];
+      state.answers[q.id] = val;
+      updateProgressBadge();
+      updateSelectionVisuals();
+      // also move focus to selected option for accessibility
+      focusSelectedOption();
+      return;
+    }
+
+    // arrow navigation
+    if (e.key === 'ArrowRight') {
+      const nextBtn = document.querySelector('#nextBtn') || document.querySelector('.nav .btn:not(.secondary)');
+      nextBtn && nextBtn.click();
+    }
+    if (e.key === 'ArrowLeft') {
+      const prevBtn = document.querySelector('#prevBtn') || document.querySelector('.nav .btn.secondary');
+      prevBtn && prevBtn.click();
+    }
+  });
+
+  // ---------------------
+  // Initial boot
+  // ---------------------
+  function boot() {
+    // Ensure elements exist
+    if (!$id('cardContent')) {
+      console.error('cardContent element missing');
+      return;
+    }
+    // set initial progress
+    updateProgressBadge();
+    // render first question
+    renderQuestion();
+  }
+
+  document.addEventListener('DOMContentLoaded', boot);
+
+  </script>
+</body>
+</html>
