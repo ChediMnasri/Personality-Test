@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Mind Odyssey — Discover Your Inner Compass</title>
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            mbtiBlue: '#2563eb',
+            mbtiPurple: '#7c3aed',
+            mbtiGreen: '#16a34a',
+            mbtiYellow: '#facc15',
+          },
+          fontFamily: {
+            inter: ['Inter', 'system-ui', 'sans-serif'],
+            serif: ['"DM Serif Display"', 'serif'],
+          },
+        }
+      }
+    };
+  </script>
+
+  <style>
+    /* === BACKGROUND === */
+    :root {
+      --c1: #2563eb;
+      --c2: #7c3aed;
+      --c3: #16a34a;
+      --c4: #facc15;
+    }
+
+    html, body {
+      margin: 0;
+      height: 100%;
+      font-family: Inter, system-ui, sans-serif;
+      color: rgba(255,255,255,0.95);
+      background: linear-gradient(270deg, var(--c1), var(--c2), var(--c3), var(--c4));
+      background-size: 400% 400%;
+      animation: gradientShift 35s ease infinite;
+      overflow-x: hidden;
+    }
+
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* === HEADER === */
+    header {
+      position: sticky;
+      top: 0;
+      backdrop-filter: blur(12px);
+      background: rgba(0,0,0,0.2);
+      z-index: 50;
+      transition: all 0.3s ease;
+    }
+
+    header.shrink .logo {
+      transform: scale(0.8);
+    }
+
+    .logo {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      background: linear-gradient(135deg,#7c3aed,#2563eb);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      color: white;
+      box-shadow: 0 0 25px rgba(124,58,237,0.45);
+      transition: transform .3s ease, box-shadow .3s ease;
+      cursor: pointer;
+    }
+    .logo:hover {
+      transform: rotate(10deg) scale(1.08);
+      box-shadow: 0 0 35px rgba(37,99,235,0.6);
+    }
+
+    /* === TOOLTIP === */
+    .tooltip {
+      position: absolute;
+      background: rgba(0,0,0,0.8);
+      color: white;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      transform: translateY(-8px);
+      opacity: 0;
+      pointer-events: none;
+      transition: all .25s ease;
+    }
+    .group:hover .tooltip {
+      opacity: 1;
+      transform: translateY(-12px);
+    }
+
+    /* === CARDS === */
+    .glass {
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(10px);
+      border-radius: 18px;
+      box-shadow: 0 18px 45px rgba(0,0,0,0.25);
+      border: 1px solid transparent;
+      transition: all 0.25s ease-out;
+      position: relative;
+      cursor: pointer;
+    }
+    .glass:hover {
+      transform: translateY(-6px);
+      border-color: rgba(255,255,255,0.25);
+      box-shadow: 0 25px 70px rgba(0,0,0,0.35);
+    }
+    .glass:hover .icon {
+      transform: translateY(-2px);
+    }
+
+    /* === ICON BOUNCE === */
+    .icon {
+      transition: transform 0.25s ease-out;
+    }
+
+    /* === PARTICLES === */
+    .particle {
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      background: rgba(255,255,255,0.25);
+      border-radius: 50%;
+      animation: floaty 18s infinite ease-in-out;
+    }
+    @keyframes floaty {
+      0% { transform: translateY(0) scale(1); opacity: 0.6; }
+      50% { transform: translateY(-80vh) scale(1.3); opacity: 1; }
+      100% { transform: translateY(0) scale(1); opacity: 0.6; }
+    }
+
+    /* === TYPEWRITER === */
+    .typewriter {
+      overflow: hidden;
+      border-right: .08em solid rgba(255,255,255,0.8);
+      white-space: nowrap;
+      animation: typing 5s steps(40, end), blink .75s step-end infinite;
+      width: 0;
+    }
+    @keyframes typing { from { width: 0 } to { width: 100% } }
+    @keyframes blink { 50% { border-color: transparent } }
+
+    footer {
+      text-align: center;
+      color: rgba(255,255,255,0.85);
+      font-size: 0.9rem;
+      margin-top: 6rem;
+    }
+
+    /* === MICRO-CONFETTI === */
+    .confetti {
+      position: fixed;
+      width: 6px;
+      height: 6px;
+      background: var(--color, #fff);
+      opacity: 0.9;
+      animation: confettiFall 1.5s ease-out forwards;
+    }
+    @keyframes confettiFall {
+      to {
+        transform: translateY(100vh) rotate(720deg);
+        opacity: 0;
+      }
+    }
+  </style>
+</head>
+
+<body class="flex flex-col items-center justify-start min-h-screen relative">
+
+  <!-- BACKGROUND PARTICLES -->
+  <div id="particles"></div>
+
+  <!-- HEADER -->
+  <header class="w-full px-6 md:px-12 py-4 flex justify-between items-center">
+    <div class="flex gap-4 items-center group relative">
+      <div class="logo">🧭</div>
+      <div>
+        <h1 class="font-extrabold text-2xl tracking-tight font-serif">Mind Odyssey</h1>
+        <p class="text-sm text-white/80 -mt-1">Built for insight, not labels.</p>
+      </div>
+      <div class="tooltip">Mind Odyssey — 16-Personality Compass</div>
+    </div>
+
+    <div class="flex items-center gap-4">
+      <span class="text-sm opacity-80">🧩 Saved locally</span>
+      <button onclick="goToTest()" 
+        class="bg-white/10 hover:bg-white/20 text-white font-semibold px-5 py-2 rounded-lg transition-all duration-300 shadow hover:shadow-[0_0_20px_rgba(124,58,237,0.4)]">
+        Start a New Journey →
+      </button>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="text-center mt-20 mb-28 px-6">
+    <h2 class="text-5xl md:text-6xl font-serif font-extrabold mb-6 tracking-tight" style="letter-spacing:-0.03em;">
+      Discover the Compass Within You
+    </h2>
+    <p class="text-lg text-white/90 mb-4 typewriter">You’re not just taking a test. You’re meeting your mind.</p>
+    <p class="text-sm text-white/70">No login — 5–10 minutes — private by default.</p>
+  </section>
+
+  <!-- MAIN CARDS -->
+  <main class="grid md:grid-cols-2 lg:grid-cols-3 gap-10 px-6 md:px-12 mb-24 w-full max-w-6xl">
+    <!-- Card 1 -->
+    <div class="glass p-6 group" onclick="goToTest()">
+      <div class="flex items-center gap-3 mb-3">
+        <span class="text-2xl icon">🧭</span>
+        <h3 class="font-bold text-xl">Start a New Journey</h3>
+      </div>
+      <p class="text-white/85">Begin your expedition and discover how your personality aligns with your choices.</p>
+      <div class="tooltip">Start the MBTI-inspired assessment.</div>
+    </div>
+
+    <!-- Card 2 -->
+    <div class="glass p-6 group" onclick="location.href='types.html'">
+      <div class="flex items-center gap-3 mb-3">
+        <span class="text-2xl icon">🌌</span>
+        <h3 class="font-bold text-xl">Meet the 16 Minds</h3>
+      </div>
+      <p class="text-white/85">Explore every archetype — thinkers, dreamers, diplomats, and explorers.</p>
+      <div class="tooltip">View all 16 MBTI personality types.</div>
+    </div>
+
+    <!-- Card 3 -->
+    <div class="glass p-6 group" onclick="comingSoon('Compare personalities side by side.')">
+      <div class="flex items-center gap-3 mb-3">
+        <span class="text-2xl icon">⚖️</span>
+        <h3 class="font-bold text-xl">See How Minds Connect</h3>
+      </div>
+      <p class="text-white/85">Discover how types complement or challenge each other.</p>
+      <div class="tooltip">Compare types with contrast analysis.</div>
+    </div>
+
+    <!-- Hidden Cards (appear later) -->
+    <div class="glass p-6 group hidden" id="statsCard">
+      <div class="flex items-center gap-3 mb-3">
+        <span class="text-2xl icon">📊</span>
+        <h3 class="font-bold text-xl">Your Growth Patterns</h3>
+      </div>
+      <p class="text-white/85">Track how your traits evolve and stabilize over time.</p>
+      <div class="tooltip">Coming after your first test!</div>
+    </div>
+
+    <div class="glass p-6 group hidden" id="learnCard">
+      <div class="flex items-center gap-3 mb-3">
+        <span class="text-2xl icon">📘</span>
+        <h3 class="font-bold text-xl">Learn How Your Mind Dances</h3>
+      </div>
+      <p class="text-white/85">Understand cognitive patterns and emotional rhythms that drive you.</p>
+      <div class="tooltip">Deep-dive learning center.</div>
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="flex flex-col gap-2 items-center">
+      <p>Crafted for clarity — continue your mind odyssey.</p>
+      <p class="text-xs text-white/60">About • Research • Privacy • Contact • Accessibility</p>
+    </div>
+  </footer>
+
+  <script>
+    // === PARTICLES ===
+    const container = document.getElementById('particles');
+    for (let i = 0; i < 25; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.style.left = Math.random() * 100 + 'vw';
+      p.style.top = Math.random() * 100 + 'vh';
+      p.style.animationDuration = 12 + Math.random() * 18 + 's';
+      p.style.opacity = Math.random() * 0.8 + 0.2;
+      container.appendChild(p);
+    }
+
+    // === REDIRECTS ===
+    function goToTest() {
+      window.location.href = "index.html";
+    }
+
+    // === CONFETTI ON CLICK ===
+    function comingSoon(message) {
+      createConfetti();
+      setTimeout(() => alert(message + ' Coming soon!'), 200);
+    }
+
+    function createConfetti() {
+      for (let i = 0; i < 15; i++) {
+        const c = document.createElement('div');
+        c.className = 'confetti';
+        c.style.left = Math.random() * 100 + 'vw';
+        c.style.top = '0';
+        c.style.setProperty('--color', ['#facc15','#7c3aed','#2563eb','#16a34a'][Math.floor(Math.random()*4)]);
+        c.style.animationDelay = Math.random() * 0.2 + 's';
+        document.body.appendChild(c);
+        setTimeout(() => c.remove(), 1600);
+      }
+    }
+
+    // === HEADER SHRINK ON SCROLL ===
+    const header = document.querySelector('header');
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 30) header.classList.add('shrink');
+      else header.classList.remove('shrink');
+    });
+
+    // === PERSONALIZATION BASED ON TYPE ===
+    const savedType = localStorage.getItem('mbtiType');
+    if (savedType) {
+      document.body.style.setProperty('--c1', savedType.includes('N') ? '#7c3aed' : '#16a34a');
+      document.body.style.setProperty('--c2', savedType.includes('F') ? '#facc15' : '#2563eb');
+      document.getElementById('statsCard').classList.remove('hidden');
+      document.getElementById('learnCard').classList.remove('hidden');
+    }
+  </script>
+</body>
+</html>
